@@ -8,7 +8,7 @@ not glibc、libstdc++ and libgcc in GNU C/C++ compiler.
 
 ## Build
 ```bash
-docker build --rm=true -t genshen/clang-toolchain:latest .
+docker build --rm=true -t monkey-jsun/clang-musl:latest .
 ```
 
 ## Usage

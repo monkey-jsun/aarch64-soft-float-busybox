@@ -1,17 +1,23 @@
 ARG ALPINE_VERSION=3.15
+
 ARG LLVM_VERSION=14.0.0
+ARG MUSL_VERSION=1.2.2
 ARG INSTALL_PREFIX=/usr/local
 ARG LLVM_INSTALL_PATH=${INSTALL_PREFIX}/lib/llvm
 
 FROM alpine:${ALPINE_VERSION} AS builder
 
+ARG LLVM_VERSION
+ARG MUSL_VERSION
+ARG INSTALL_PREFIX
+ARG LLVM_INSTALL_PATH
+
 # install prerequisites
-RUN apk add --no-cache build-base cmake curl git linux-headers ninja python3 wget zlib-dev
+RUN apk add --no-cache build-base cmake curl git linux-headers ninja python3 wget zlib-dev make
 
 # download sources
-ARG LLVM_VERSION
-ENV LLVM_DOWNLOAD_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-project-${LLVM_VERSION}.src.tar.xz"
-ENV LLVM_SRC_DIR=/llvm_src
+ARG LLVM_DOWNLOAD_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-project-${LLVM_VERSION}.src.tar.xz"
+ARG LLVM_SRC_DIR=/llvm_src
 RUN mkdir -p ${LLVM_SRC_DIR} \
     && curl -L ${LLVM_DOWNLOAD_URL} | tar Jx --strip-components 1 -C ${LLVM_SRC_DIR}
 
@@ -24,8 +30,6 @@ RUN curl -L https://github.com/emacski/llvm-project/commit/2fd6a43c9adf6f05936e5
 
 # build projects with gcc toolchain, runtimes with newly built projects
 # NOTE for some reason LIB*_USE_COMPILER_RT is not passed to runtimes... Using CLANG_DEFAULT_RTLIB instead.
-ARG INSTALL_PREFIX
-ENV INSTALL_PREFIX=${INSTALL_PREFIX}
 ARG GCC_LLVM_INSTALL_PATH=${INSTALL_PREFIX}/lib/gcc-llvm
 RUN cd ${LLVM_SRC_DIR}/ \
     && cmake -B./build -H./llvm -DCMAKE_BUILD_TYPE=Release -G Ninja \
@@ -64,12 +68,21 @@ RUN cd ${LLVM_SRC_DIR}/ \
     && ln -s ${GCC_LLVM_INSTALL_PATH}/lib/*       ${INSTALL_PREFIX}/lib/ \
     && ln -s ${GCC_LLVM_INSTALL_PATH}/include/c++ ${INSTALL_PREFIX}/include/
 
+# build musl
+ARG MUSL_SRC_DIR=/musl_src
+ARG MUSL_DOWNLOAD_URL=https://musl.libc.org/releases/musl-${MUSL_VERSION}.tar.gz
+RUN mkdir -p ${MUSL_SRC_DIR} \
+    && curl -L ${MUSL_DOWNLOAD_URL} | tar xz --strip-components 1 -C ${MUSL_SRC_DIR} 
+RUN cd ${MUSL_SRC_DIR} \
+    && ./configure --prefix=${INSTALL_PREFIX} \
+    && make -j4 \
+    && make install
+
 # TODO build zlib with llvm toolchain
 
 # build and link clang+lld with llvm toolchain
 # NOTE link jobs with LTO can use more than 10GB each!
 # NOTE execinfo.h not available on musl -> lldb and compiler-rt:fuzzer/sanitizer/profiler cannot be built!
-ARG LLVM_INSTALL_PATH
 ARG LDFLAGS="-rtlib=compiler-rt -unwindlib=libunwind -stdlib=libc++ -L/usr/local/lib -Wno-unused-command-line-argument"
 RUN cd ${LLVM_SRC_DIR}/ \
     && cmake -B./build -H./llvm -DCMAKE_BUILD_TYPE=MinSizeRel -G Ninja \
@@ -129,7 +142,7 @@ RUN mkdir -p ${INSTALL_PREFIX}/lib ${INSTALL_PREFIX}/bin ${INSTALL_PREFIX}/inclu
     && ln -s ${LLVM_INSTALL_PATH}/bin/*       ${INSTALL_PREFIX}/bin/ \
     && ln -s ${LLVM_INSTALL_PATH}/lib/*       ${INSTALL_PREFIX}/lib/ \
     && ln -s ${LLVM_INSTALL_PATH}/include/c++ ${INSTALL_PREFIX}/include/
-RUN apk add --no-cache binutils linux-headers musl-dev zlib
+RUN apk add --no-cache binutils linux-headers zlib
 
 # set llvm toolchain as default
 ENV CC=clang
