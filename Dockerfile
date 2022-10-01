@@ -61,7 +61,7 @@ RUN cd ${LLVM_SRC_DIR}/ \
         -DLIBCXX_USE_COMPILER_RT=ON \
         -DCLANG_DEFAULT_RTLIB=compiler-rt \
         -DCLANG_DEFAULT_LINKER=lld \
-        -DLLVM_DEFAULT_TARGET_TRIPLE=x86_64-alpine-linux-musl \
+        -DLLVM_DEFAULT_TARGET_TRIPLE=aarch64-alpine-linux-musl \
         -DLLVM_TARGETS_TO_BUILD="Native" \
     && cmake --build ./build --target install \
     && rm -rf build \
@@ -100,7 +100,7 @@ RUN cd ${LLVM_SRC_DIR}/ \
         -DLLVM_ENABLE_RUNTIMES="compiler-rt;libunwind;libcxxabi;libcxx" \
         -DBUILTINS_CMAKE_ARGS="-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF;-DCMAKE_SHARED_LINKER_FLAGS='${LDFLAGS}';-DCMAKE_MODULE_LINKER_FLAGS='${LDFLAGS}';-DCMAKE_EXE_LINKER_FLAGS='${LDFLAGS}'" \
         -DRUNTIMES_CMAKE_ARGS="-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF;-DCMAKE_SHARED_LINKER_FLAGS='${LDFLAGS}';-DCMAKE_MODULE_LINKER_FLAGS='${LDFLAGS}';-DCMAKE_EXE_LINKER_FLAGS='${LDFLAGS}'" \
-        -DLLVM_PARALLEL_LINK_JOBS=2 \
+        -DLLVM_PARALLEL_LINK_JOBS=4 \
         -DLLVM_ENABLE_LTO=ON \
         -DLLVM_ENABLE_LIBCXX=ON \
         -DLLVM_ENABLE_BINDINGS=OFF \
@@ -126,8 +126,8 @@ RUN cd ${LLVM_SRC_DIR}/ \
         -DCLANG_DEFAULT_RTLIB=compiler-rt \
         -DCLANG_DEFAULT_UNWINDLIB=libunwind \
         -DCLANG_DEFAULT_CXX_STDLIB=libc++ \
-        -DLLVM_DEFAULT_TARGET_TRIPLE=x86_64-alpine-linux-musl  \
-        -DLLVM_TARGETS_TO_BUILD="X86" \
+        -DLLVM_DEFAULT_TARGET_TRIPLE=aarch64-alpine-linux-musl  \
+        -DLLVM_TARGETS_TO_BUILD="AArch64" \
         -DLLVM_DISTRIBUTION_COMPONENTS="clang;LTO;clang-format;clang-resource-headers;lld;builtins;runtimes" \
     && cmake --build ./build --target install-distribution \
     && rm -rf build
