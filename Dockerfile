@@ -2,8 +2,9 @@ ARG ALPINE_VERSION=3.15
 
 ARG LLVM_VERSION=14.0.0
 ARG MUSL_VERSION=1.2.2
-ARG INSTALL_PREFIX=/usr/local
-ARG LLVM_INSTALL_PATH=${INSTALL_PREFIX}/lib/llvm
+ARG INSTALL_PREFIX=/install
+ARG LLVM_INSTALL_PATH=${INSTALL_PREFIX}/llvm
+ARG MUSL_INSTALL_PATH=${INSTALL_PREFIX}/musl
 
 FROM alpine:${ALPINE_VERSION} AS builder
 
@@ -11,6 +12,7 @@ ARG LLVM_VERSION
 ARG MUSL_VERSION
 ARG INSTALL_PREFIX
 ARG LLVM_INSTALL_PATH
+ARG MUSL_INSTALL_PATH
 
 # install prerequisites
 RUN apk add --no-cache build-base cmake curl git linux-headers ninja python3 wget zlib-dev make
@@ -30,7 +32,7 @@ RUN curl -L https://github.com/emacski/llvm-project/commit/2fd6a43c9adf6f05936e5
 
 # build projects with gcc toolchain, runtimes with newly built projects
 # NOTE for some reason LIB*_USE_COMPILER_RT is not passed to runtimes... Using CLANG_DEFAULT_RTLIB instead.
-ARG GCC_LLVM_INSTALL_PATH=${INSTALL_PREFIX}/lib/gcc-llvm
+ARG GCC_LLVM_INSTALL_PATH=/usr/local/lib/gcc-llvm
 RUN cd ${LLVM_SRC_DIR}/ \
     && cmake -B./build -H./llvm -DCMAKE_BUILD_TYPE=Release -G Ninja \
         -DCMAKE_INSTALL_PREFIX=${GCC_LLVM_INSTALL_PATH} \
@@ -63,10 +65,10 @@ RUN cd ${LLVM_SRC_DIR}/ \
         -DLLVM_TARGETS_TO_BUILD="Native" \
     && cmake --build ./build --target install \
     && rm -rf build \
-    && mkdir -p ${INSTALL_PREFIX}/lib ${INSTALL_PREFIX}/bin ${INSTALL_PREFIX}/include \
-    && ln -s ${GCC_LLVM_INSTALL_PATH}/bin/*       ${INSTALL_PREFIX}/bin/ \
-    && ln -s ${GCC_LLVM_INSTALL_PATH}/lib/*       ${INSTALL_PREFIX}/lib/ \
-    && ln -s ${GCC_LLVM_INSTALL_PATH}/include/c++ ${INSTALL_PREFIX}/include/
+    && mkdir -p /usr/local/lib /usr/local/bin /usr/local/include \
+    && ln -s ${GCC_LLVM_INSTALL_PATH}/bin/*       /usr/local/bin/ \
+    && ln -s ${GCC_LLVM_INSTALL_PATH}/lib/*       /usr/local/lib/ \
+    && ln -s ${GCC_LLVM_INSTALL_PATH}/include/c++ /usr/local/include/
 
 # build musl
 ARG MUSL_SRC_DIR=/musl_src
@@ -74,8 +76,8 @@ ARG MUSL_DOWNLOAD_URL=https://musl.libc.org/releases/musl-${MUSL_VERSION}.tar.gz
 RUN mkdir -p ${MUSL_SRC_DIR} \
     && curl -L ${MUSL_DOWNLOAD_URL} | tar xz --strip-components 1 -C ${MUSL_SRC_DIR} 
 RUN cd ${MUSL_SRC_DIR} \
-    && ./configure --prefix=${INSTALL_PREFIX} \
-    && make -j4 \
+    && ./configure --prefix=${MUSL_INSTALL_PATH} \
+    && make -j`nproc` \
     && make install
 
 # TODO build zlib with llvm toolchain
@@ -130,29 +132,35 @@ RUN cd ${LLVM_SRC_DIR}/ \
     && cmake --build ./build --target install-distribution \
     && rm -rf build
 
-
 FROM alpine:${ALPINE_VERSION} AS clang-toolchain
 
 ARG INSTALL_PREFIX
 ARG LLVM_INSTALL_PATH
+ARG MUSL_INSTALL_PATH
+
+ARG DEST_INSTALL_PREFIX=/usr
 
 # assemble final image
-COPY --from=builder ${LLVM_INSTALL_PATH} ${LLVM_INSTALL_PATH}
-RUN mkdir -p ${INSTALL_PREFIX}/lib ${INSTALL_PREFIX}/bin ${INSTALL_PREFIX}/include \
-    && ln -s ${LLVM_INSTALL_PATH}/bin/*       ${INSTALL_PREFIX}/bin/ \
-    && ln -s ${LLVM_INSTALL_PATH}/lib/*       ${INSTALL_PREFIX}/lib/ \
-    && ln -s ${LLVM_INSTALL_PATH}/include/c++ ${INSTALL_PREFIX}/include/
+COPY --from=builder ${INSTALL_PREFIX} ${INSTALL_PREFIX}
+RUN mkdir -p ${DEST_INSTALL_PREFIX}/lib ${DEST_INSTALL_PREFIX}/bin ${DEST_INSTALL_PREFIX}/include \
+    && ln -s ${LLVM_INSTALL_PATH}/bin/*       ${DEST_INSTALL_PREFIX}/bin/ \
+    && ln -s ${LLVM_INSTALL_PATH}/lib/*       ${DEST_INSTALL_PREFIX}/lib/ \
+    && ln -s ${LLVM_INSTALL_PATH}/include/c++ ${DEST_INSTALL_PREFIX}/include/ \
+    && ln -s ${MUSL_INSTALL_PATH}/bin/*       ${DEST_INSTALL_PREFIX}/bin/ \
+    && ln -s ${MUSL_INSTALL_PATH}/lib/*       ${DEST_INSTALL_PREFIX}/lib/ \
+    && ln -s ${MUSL_INSTALL_PATH}/include/*   ${DEST_INSTALL_PREFIX}/include/
 RUN apk add --no-cache binutils linux-headers zlib
 
 # set llvm toolchain as default
 ENV CC=clang
-RUN ln -s ${INSTALL_PREFIX}/bin/clang ${INSTALL_PREFIX}/bin/cc
 ENV CXX=clang++
-RUN ln -s ${INSTALL_PREFIX}/bin/clang++ ${INSTALL_PREFIX}/bin/c++
-RUN ln -s ${INSTALL_PREFIX}/bin/lld ${INSTALL_PREFIX}/bin/ld
 ENV CFLAGS=""
 ENV CXXFLAGS="-stdlib=libc++"
 ENV LDFLAGS="-rtlib=compiler-rt -unwindlib=libunwind -stdlib=libc++ -lc++ -lc++abi"
+
+RUN ln -sf ${DEST_INSTALL_PREFIX}/bin/clang ${DEST_INSTALL_PREFIX}/bin/cc \
+    && ln -sf ${DEST_INSTALL_PREFIX}/bin/clang++ ${DEST_INSTALL_PREFIX}/bin/c++ \
+    && ln -sf ${DEST_INSTALL_PREFIX}/bin/lld ${DEST_INSTALL_PREFIX}/bin/ld
 
 # add user mount point
 RUN mkdir -p /project
