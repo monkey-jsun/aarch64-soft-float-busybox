@@ -1,30 +1,39 @@
-# docker-clang-toolchain
-> clang-toolchain without gnu.
+# aarch64-soft-float-busybox
 
-clang/clang++ will link [musl libc](https://www.musl-libc.org), [libc++](http://libcxx.llvm.org),
-[libcxxabi](https://libcxxabi.llvm.org), libunwind and [compiler-rt](http://compiler-rt.llvm.org) 
-as C/C++ standard library or C++ runtime,
-not glibc、libstdc++ and libgcc in GNU C/C++ compiler.
+Unlike 32bit ARM, AArch64 does not define an official "soft-float" ABI.  By definition all 64bit ARM CPUs must have floating point and NEON SIMD support.
+
+However, there are special situations where we want to run soft-float userland, e.g., avoiding floating-point bugs, special CPU, development of emulator or translators, etc.
+
+In this project we leverage llvm "-mgeneral-regs-only" option to build a soft-float, statically linked busybox.  We use docker and alpine linux to fix the codify the build process.  Here is an over sketch of the idea.
+
+* use gcc to build stage0 clang/llvm with "soft-float" patches
+* use stage0 clang/llvm to build stage1 clang/llvm, mostly to avoid gcc RT libraries and patch llvm RT libraries with "soft-float" support
+* use stage1 clang/llvm to build musl C library with "soft-float" patch
+* install stage1 clang/llvm and patched musl C library to build busybox statically
 
 ## Build
 ```bash
-docker build --rm=true -t monkey-jsun/clang-musl:latest .
+docker build --rm=true -t monkey-jsun/aarch64-soft-float-busybox:latest .
 ```
 
-## Usage
+## Fetch Build Artifacts
+```bash
+docker cp <container id>:/install output/
+```
 
+## Compile other programs
 ### Dynamic Linking
 ```bash
-docker run -it --rm -v ${PWD}:/project genshen/clang-toolchain:latest clang++ main.cpp -o a.out # compile
-docker run -it --rm -v ${PWD}:/project genshen/clang-toolchain:latest ./a.out # run
-docker run -it --rm -v ${PWD}:/project genshen/clang-toolchain:latest ldd ./a.out # show shared libs
-	/lib/ld-musl-x86_64.so.1 (0x7fc960e6f000)
-	libc++.so.1 => /usr/local/lib/libc++.so.1 (0x7fc960cc6000)
-	libc++abi.so.1 => /usr/local/lib/libc++abi.so.1 (0x7fc960c67000)
-	libc.musl-x86_64.so.1 => /lib/ld-musl-x86_64.so.1 (0x7fc960e6f000)
+docker run -it --rm -v ${PWD}:/project monkey-jsun/aarch64-soft-float-busybox:latest clang++ main.cpp -o a.out # compile
+docker run -it --rm -v ${PWD}:/project monkey-jsun/aarch64-soft-float-busybox:latest ./a.out # run
+docker run -it --rm -v ${PWD}:/project monkey-jsun/aarch64-soft-float-busybox:latest ldd ./a.out # show shared libs
 ```
 
 ### Static Linking
 ```bash
-docker run -it --rm -v ${PWD}:/project genshen/clang-toolchain:latest clang++ main.cpp -static -lc++ -lc++abi -o main
+docker run -it --rm -v ${PWD}:/project gmonkey-jsun/aarch64-soft-float-busybox:latest clang++ main.cpp -static -lc++ -lc++abi -o main
 ```
+
+## Credits
+* Thanks to [Gen Shen](https://github.com/genshen) who have set a [good base](https://github.com/genshen/docker-clang-toolchain) to start with.
+* Thanks to Amanieu for all the soft-float related patches
