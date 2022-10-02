@@ -1,0 +1,494 @@
+diff -Nru musl-1.2.2.orig/arch/aarch64/fp_arch.h musl-1.2.2/arch/aarch64/fp_arch.h
+--- musl-1.2.2.orig/arch/aarch64/fp_arch.h	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/arch/aarch64/fp_arch.h	1970-01-01 00:00:00.000000000 +0000
+@@ -1,25 +0,0 @@
+-#define fp_barrierf fp_barrierf
+-static inline float fp_barrierf(float x)
+-{
+-	__asm__ __volatile__ ("" : "+w"(x));
+-	return x;
+-}
+-
+-#define fp_barrier fp_barrier
+-static inline double fp_barrier(double x)
+-{
+-	__asm__ __volatile__ ("" : "+w"(x));
+-	return x;
+-}
+-
+-#define fp_force_evalf fp_force_evalf
+-static inline void fp_force_evalf(float x)
+-{
+-	__asm__ __volatile__ ("" : "+w"(x));
+-}
+-
+-#define fp_force_eval fp_force_eval
+-static inline void fp_force_eval(double x)
+-{
+-	__asm__ __volatile__ ("" : "+w"(x));
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/ceil.c musl-1.2.2/src/math/aarch64/ceil.c
+--- musl-1.2.2.orig/src/math/aarch64/ceil.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/ceil.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-double ceil(double x)
+-{
+-	__asm__ ("frintp %d0, %d1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/ceilf.c musl-1.2.2/src/math/aarch64/ceilf.c
+--- musl-1.2.2.orig/src/math/aarch64/ceilf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/ceilf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-float ceilf(float x)
+-{
+-	__asm__ ("frintp %s0, %s1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/fabs.c musl-1.2.2/src/math/aarch64/fabs.c
+--- musl-1.2.2.orig/src/math/aarch64/fabs.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/fabs.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-double fabs(double x)
+-{
+-	__asm__ ("fabs %d0, %d1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/fabsf.c musl-1.2.2/src/math/aarch64/fabsf.c
+--- musl-1.2.2.orig/src/math/aarch64/fabsf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/fabsf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-float fabsf(float x)
+-{
+-	__asm__ ("fabs %s0, %s1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/floor.c musl-1.2.2/src/math/aarch64/floor.c
+--- musl-1.2.2.orig/src/math/aarch64/floor.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/floor.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-double floor(double x)
+-{
+-	__asm__ ("frintm %d0, %d1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/floorf.c musl-1.2.2/src/math/aarch64/floorf.c
+--- musl-1.2.2.orig/src/math/aarch64/floorf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/floorf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-float floorf(float x)
+-{
+-	__asm__ ("frintm %s0, %s1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/fma.c musl-1.2.2/src/math/aarch64/fma.c
+--- musl-1.2.2.orig/src/math/aarch64/fma.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/fma.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-double fma(double x, double y, double z)
+-{
+-	__asm__ ("fmadd %d0, %d1, %d2, %d3" : "=w"(x) : "w"(x), "w"(y), "w"(z));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/fmaf.c musl-1.2.2/src/math/aarch64/fmaf.c
+--- musl-1.2.2.orig/src/math/aarch64/fmaf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/fmaf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-float fmaf(float x, float y, float z)
+-{
+-	__asm__ ("fmadd %s0, %s1, %s2, %s3" : "=w"(x) : "w"(x), "w"(y), "w"(z));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/fmax.c musl-1.2.2/src/math/aarch64/fmax.c
+--- musl-1.2.2.orig/src/math/aarch64/fmax.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/fmax.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-double fmax(double x, double y)
+-{
+-	__asm__ ("fmaxnm %d0, %d1, %d2" : "=w"(x) : "w"(x), "w"(y));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/fmaxf.c musl-1.2.2/src/math/aarch64/fmaxf.c
+--- musl-1.2.2.orig/src/math/aarch64/fmaxf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/fmaxf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-float fmaxf(float x, float y)
+-{
+-	__asm__ ("fmaxnm %s0, %s1, %s2" : "=w"(x) : "w"(x), "w"(y));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/fmin.c musl-1.2.2/src/math/aarch64/fmin.c
+--- musl-1.2.2.orig/src/math/aarch64/fmin.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/fmin.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-double fmin(double x, double y)
+-{
+-	__asm__ ("fminnm %d0, %d1, %d2" : "=w"(x) : "w"(x), "w"(y));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/fminf.c musl-1.2.2/src/math/aarch64/fminf.c
+--- musl-1.2.2.orig/src/math/aarch64/fminf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/fminf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-float fminf(float x, float y)
+-{
+-	__asm__ ("fminnm %s0, %s1, %s2" : "=w"(x) : "w"(x), "w"(y));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/llrint.c musl-1.2.2/src/math/aarch64/llrint.c
+--- musl-1.2.2.orig/src/math/aarch64/llrint.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/llrint.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,10 +0,0 @@
+-#include <math.h>
+-
+-long long llrint(double x)
+-{
+-	long long n;
+-	__asm__ (
+-		"frintx %d1, %d1\n"
+-		"fcvtzs %x0, %d1\n" : "=r"(n), "+w"(x));
+-	return n;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/llrintf.c musl-1.2.2/src/math/aarch64/llrintf.c
+--- musl-1.2.2.orig/src/math/aarch64/llrintf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/llrintf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,10 +0,0 @@
+-#include <math.h>
+-
+-long long llrintf(float x)
+-{
+-	long long n;
+-	__asm__ (
+-		"frintx %s1, %s1\n"
+-		"fcvtzs %x0, %s1\n" : "=r"(n), "+w"(x));
+-	return n;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/llround.c musl-1.2.2/src/math/aarch64/llround.c
+--- musl-1.2.2.orig/src/math/aarch64/llround.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/llround.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,8 +0,0 @@
+-#include <math.h>
+-
+-long long llround(double x)
+-{
+-	long long n;
+-	__asm__ ("fcvtas %x0, %d1" : "=r"(n) : "w"(x));
+-	return n;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/llroundf.c musl-1.2.2/src/math/aarch64/llroundf.c
+--- musl-1.2.2.orig/src/math/aarch64/llroundf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/llroundf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,8 +0,0 @@
+-#include <math.h>
+-
+-long long llroundf(float x)
+-{
+-	long long n;
+-	__asm__ ("fcvtas %x0, %s1" : "=r"(n) : "w"(x));
+-	return n;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/lrint.c musl-1.2.2/src/math/aarch64/lrint.c
+--- musl-1.2.2.orig/src/math/aarch64/lrint.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/lrint.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,10 +0,0 @@
+-#include <math.h>
+-
+-long lrint(double x)
+-{
+-	long n;
+-	__asm__ (
+-		"frintx %d1, %d1\n"
+-		"fcvtzs %x0, %d1\n" : "=r"(n), "+w"(x));
+-	return n;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/lrintf.c musl-1.2.2/src/math/aarch64/lrintf.c
+--- musl-1.2.2.orig/src/math/aarch64/lrintf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/lrintf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,10 +0,0 @@
+-#include <math.h>
+-
+-long lrintf(float x)
+-{
+-	long n;
+-	__asm__ (
+-		"frintx %s1, %s1\n"
+-		"fcvtzs %x0, %s1\n" : "=r"(n), "+w"(x));
+-	return n;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/lround.c musl-1.2.2/src/math/aarch64/lround.c
+--- musl-1.2.2.orig/src/math/aarch64/lround.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/lround.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,8 +0,0 @@
+-#include <math.h>
+-
+-long lround(double x)
+-{
+-	long n;
+-	__asm__ ("fcvtas %x0, %d1" : "=r"(n) : "w"(x));
+-	return n;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/lroundf.c musl-1.2.2/src/math/aarch64/lroundf.c
+--- musl-1.2.2.orig/src/math/aarch64/lroundf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/lroundf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,8 +0,0 @@
+-#include <math.h>
+-
+-long lroundf(float x)
+-{
+-	long n;
+-	__asm__ ("fcvtas %x0, %s1" : "=r"(n) : "w"(x));
+-	return n;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/nearbyint.c musl-1.2.2/src/math/aarch64/nearbyint.c
+--- musl-1.2.2.orig/src/math/aarch64/nearbyint.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/nearbyint.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-double nearbyint(double x)
+-{
+-	__asm__ ("frinti %d0, %d1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/nearbyintf.c musl-1.2.2/src/math/aarch64/nearbyintf.c
+--- musl-1.2.2.orig/src/math/aarch64/nearbyintf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/nearbyintf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-float nearbyintf(float x)
+-{
+-	__asm__ ("frinti %s0, %s1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/rint.c musl-1.2.2/src/math/aarch64/rint.c
+--- musl-1.2.2.orig/src/math/aarch64/rint.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/rint.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-double rint(double x)
+-{
+-	__asm__ ("frintx %d0, %d1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/rintf.c musl-1.2.2/src/math/aarch64/rintf.c
+--- musl-1.2.2.orig/src/math/aarch64/rintf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/rintf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-float rintf(float x)
+-{
+-	__asm__ ("frintx %s0, %s1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/round.c musl-1.2.2/src/math/aarch64/round.c
+--- musl-1.2.2.orig/src/math/aarch64/round.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/round.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-double round(double x)
+-{
+-	__asm__ ("frinta %d0, %d1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/roundf.c musl-1.2.2/src/math/aarch64/roundf.c
+--- musl-1.2.2.orig/src/math/aarch64/roundf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/roundf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-float roundf(float x)
+-{
+-	__asm__ ("frinta %s0, %s1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/sqrt.c musl-1.2.2/src/math/aarch64/sqrt.c
+--- musl-1.2.2.orig/src/math/aarch64/sqrt.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/sqrt.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-double sqrt(double x)
+-{
+-	__asm__ ("fsqrt %d0, %d1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/sqrtf.c musl-1.2.2/src/math/aarch64/sqrtf.c
+--- musl-1.2.2.orig/src/math/aarch64/sqrtf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/sqrtf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-float sqrtf(float x)
+-{
+-	__asm__ ("fsqrt %s0, %s1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/trunc.c musl-1.2.2/src/math/aarch64/trunc.c
+--- musl-1.2.2.orig/src/math/aarch64/trunc.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/trunc.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-double trunc(double x)
+-{
+-	__asm__ ("frintz %d0, %d1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/math/aarch64/truncf.c musl-1.2.2/src/math/aarch64/truncf.c
+--- musl-1.2.2.orig/src/math/aarch64/truncf.c	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/math/aarch64/truncf.c	1970-01-01 00:00:00.000000000 +0000
+@@ -1,7 +0,0 @@
+-#include <math.h>
+-
+-float truncf(float x)
+-{
+-	__asm__ ("frintz %s0, %s1" : "=w"(x) : "w"(x));
+-	return x;
+-}
+diff -Nru musl-1.2.2.orig/src/string/aarch64/memset.S musl-1.2.2/src/string/aarch64/memset.S
+--- musl-1.2.2.orig/src/string/aarch64/memset.S	2021-01-15 02:26:00.000000000 +0000
++++ musl-1.2.2/src/string/aarch64/memset.S	1970-01-01 00:00:00.000000000 +0000
+@@ -1,115 +0,0 @@
+-/*
+- * memset - fill memory with a constant byte
+- *
+- * Copyright (c) 2012-2020, Arm Limited.
+- * SPDX-License-Identifier: MIT
+- */
+-
+-/* Assumptions:
+- *
+- * ARMv8-a, AArch64, Advanced SIMD, unaligned accesses.
+- *
+- */
+-
+-#define dstin   x0
+-#define val     x1
+-#define valw    w1
+-#define count   x2
+-#define dst     x3
+-#define dstend  x4
+-#define zva_val x5
+-
+-.global memset
+-.type memset,%function
+-memset:
+-
+-	dup     v0.16B, valw
+-	add     dstend, dstin, count
+-
+-	cmp     count, 96
+-	b.hi    .Lset_long
+-	cmp     count, 16
+-	b.hs    .Lset_medium
+-	mov     val, v0.D[0]
+-
+-	/* Set 0..15 bytes.  */
+-	tbz     count, 3, 1f
+-	str     val, [dstin]
+-	str     val, [dstend, -8]
+-	ret
+-	nop
+-1:      tbz     count, 2, 2f
+-	str     valw, [dstin]
+-	str     valw, [dstend, -4]
+-	ret
+-2:      cbz     count, 3f
+-	strb    valw, [dstin]
+-	tbz     count, 1, 3f
+-	strh    valw, [dstend, -2]
+-3:      ret
+-
+-	/* Set 17..96 bytes.  */
+-.Lset_medium:
+-	str     q0, [dstin]
+-	tbnz    count, 6, .Lset96
+-	str     q0, [dstend, -16]
+-	tbz     count, 5, 1f
+-	str     q0, [dstin, 16]
+-	str     q0, [dstend, -32]
+-1:      ret
+-
+-	.p2align 4
+-	/* Set 64..96 bytes.  Write 64 bytes from the start and
+-	   32 bytes from the end.  */
+-.Lset96:
+-	str     q0, [dstin, 16]
+-	stp     q0, q0, [dstin, 32]
+-	stp     q0, q0, [dstend, -32]
+-	ret
+-
+-	.p2align 4
+-.Lset_long:
+-	and     valw, valw, 255
+-	bic     dst, dstin, 15
+-	str     q0, [dstin]
+-	cmp     count, 160
+-	ccmp    valw, 0, 0, hs
+-	b.ne    .Lno_zva
+-
+-#ifndef SKIP_ZVA_CHECK
+-	mrs     zva_val, dczid_el0
+-	and     zva_val, zva_val, 31
+-	cmp     zva_val, 4              /* ZVA size is 64 bytes.  */
+-	b.ne    .Lno_zva
+-#endif
+-	str     q0, [dst, 16]
+-	stp     q0, q0, [dst, 32]
+-	bic     dst, dst, 63
+-	sub     count, dstend, dst      /* Count is now 64 too large.  */
+-	sub     count, count, 128       /* Adjust count and bias for loop.  */
+-
+-	.p2align 4
+-.Lzva_loop:
+-	add     dst, dst, 64
+-	dc      zva, dst
+-	subs    count, count, 64
+-	b.hi    .Lzva_loop
+-	stp     q0, q0, [dstend, -64]
+-	stp     q0, q0, [dstend, -32]
+-	ret
+-
+-.Lno_zva:
+-	sub     count, dstend, dst      /* Count is 16 too large.  */
+-	sub     dst, dst, 16            /* Dst is biased by -32.  */
+-	sub     count, count, 64 + 16   /* Adjust count and bias for loop.  */
+-.Lno_zva_loop:
+-	stp     q0, q0, [dst, 32]
+-	stp     q0, q0, [dst, 64]!
+-	subs    count, count, 64
+-	b.hi    .Lno_zva_loop
+-	stp     q0, q0, [dstend, -64]
+-	stp     q0, q0, [dstend, -32]
+-	ret
+-
+-.size memset,.-memset
+-

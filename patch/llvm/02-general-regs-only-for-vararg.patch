@@ -1,0 +1,16 @@
+https://reviews.llvm.org/D134717
+
+diff --git a/clang/lib/CodeGen/TargetInfo.cpp b/clang/lib/CodeGen/TargetInfo.cpp
+--- a/clang/lib/CodeGen/TargetInfo.cpp
++++ b/clang/lib/CodeGen/TargetInfo.cpp
+@@ -5988,7 +5988,8 @@
+     BaseTy = ArrTy->getElementType();
+     NumRegs = ArrTy->getNumElements();
+   }
+-  bool IsFPR = BaseTy->isFloatingPointTy() || BaseTy->isVectorTy();
++  bool IsFPR = CGF.getTarget().hasFeature("fp-armv8") &&
++      (BaseTy->isFloatingPointTy() || BaseTy->isVectorTy());
+ 
+   // The AArch64 va_list type and handling is specified in the Procedure Call
+   // Standard, section B.4:
+

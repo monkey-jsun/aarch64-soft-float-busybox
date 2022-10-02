@@ -1,0 +1,31 @@
+Comments from original Dockerfile.
+
+# patch sources (it is also stored in patch directory)
+# see discussion in: https://github.com/llvm/llvm-project/issues/51425
+# NOTE patch from https://github.com/emacski/llvm-project/tree/13.0.0-debian-patches
+RUN curl -L https://github.com/emacski/llvm-project/commit/2fd6a43c9adf6f05936e59a379de236b5d8885b6.diff | patch -ruN --strip=1 -d /llvm_src
+
+
+diff --git a/libcxx/CMakeLists.txt b/libcxx/CMakeLists.txt
+index b1e25358d41a3..73ead40230571 100644
+--- a/libcxx/CMakeLists.txt
++++ b/libcxx/CMakeLists.txt
+@@ -793,12 +793,14 @@ function(cxx_link_system_libraries target)
+     endif()
+   elseif (LIBCXX_HAS_GCC_LIB)
+     target_link_libraries(${target} PRIVATE gcc)
++    if (LIBCXX_HAS_ATOMIC_LIB)
++      target_link_libraries(${target} PRIVATE atomic)
++    endif()
+   elseif (LIBCXX_HAS_GCC_S_LIB)
+     target_link_libraries(${target} PRIVATE gcc_s)
+-  endif()
+-
+-  if (LIBCXX_HAS_ATOMIC_LIB)
+-    target_link_libraries(${target} PRIVATE atomic)
++    if (LIBCXX_HAS_ATOMIC_LIB)
++      target_link_libraries(${target} PRIVATE atomic)
++    endif()
+   endif()
+ 
+   if (MINGW)

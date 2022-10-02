@@ -2,11 +2,17 @@ ARG ALPINE_VERSION=3.15
 
 ARG LLVM_VERSION=14.0.0
 ARG MUSL_VERSION=1.2.2
+ARG BUSYBOX_VERSION=1.33.2
+
 ARG INSTALL_PREFIX=/install
 ARG LLVM_INSTALL_PATH=${INSTALL_PREFIX}/llvm
 ARG MUSL_INSTALL_PATH=${INSTALL_PREFIX}/musl
+ARG BUSYBOX_INSTALL_PATH=${INSTALL_PREFIX}/busybox
 
-FROM alpine:${ALPINE_VERSION} AS builder
+# final location to install llvm/musl
+ARG DEST_INSTALL_PREFIX=/usr
+
+FROM alpine:${ALPINE_VERSION} AS build-llvm
 
 ARG LLVM_VERSION
 ARG MUSL_VERSION
@@ -26,7 +32,9 @@ RUN mkdir -p ${LLVM_SRC_DIR} \
 # patch sources (it is also stored in patch directory)
 # see discussion in: https://github.com/llvm/llvm-project/issues/51425
 # NOTE patch from https://github.com/emacski/llvm-project/tree/13.0.0-debian-patches
-RUN curl -L https://github.com/emacski/llvm-project/commit/2fd6a43c9adf6f05936e59a379de236b5d8885b6.diff | patch -ruN --strip=1 -d /llvm_src
+RUN curl -L http://junsun.net/misc/patch/llvm/01-libcxx-build-to-only-link-libatomic-if-rtlib-is-gcc.patch | patch -ruN --strip=1 -d ${LLVM_SRC_DIR} \
+    && curl -L http://junsun.net/misc/patch/llvm/02-general-regs-only-for-vararg.patch | patch -ruN --strip=1 -d ${LLVM_SRC_DIR} \
+    && curl -L http://junsun.net/misc/patch/llvm/03-hardcode-general-regs-only.patch | patch -ruN --strip=1 -d ${LLVM_SRC_DIR}
 
 # documentation: https://llvm.org/docs/BuildingADistribution.html
 
@@ -69,16 +77,6 @@ RUN cd ${LLVM_SRC_DIR}/ \
     && ln -s ${GCC_LLVM_INSTALL_PATH}/bin/*       /usr/local/bin/ \
     && ln -s ${GCC_LLVM_INSTALL_PATH}/lib/*       /usr/local/lib/ \
     && ln -s ${GCC_LLVM_INSTALL_PATH}/include/c++ /usr/local/include/
-
-# build musl
-ARG MUSL_SRC_DIR=/musl_src
-ARG MUSL_DOWNLOAD_URL=https://musl.libc.org/releases/musl-${MUSL_VERSION}.tar.gz
-RUN mkdir -p ${MUSL_SRC_DIR} \
-    && curl -L ${MUSL_DOWNLOAD_URL} | tar xz --strip-components 1 -C ${MUSL_SRC_DIR} 
-RUN cd ${MUSL_SRC_DIR} \
-    && ./configure --prefix=${MUSL_INSTALL_PATH} \
-    && make -j`nproc` \
-    && make install
 
 # TODO build zlib with llvm toolchain
 
@@ -132,16 +130,58 @@ RUN cd ${LLVM_SRC_DIR}/ \
     && cmake --build ./build --target install-distribution \
     && rm -rf build
 
-FROM alpine:${ALPINE_VERSION} AS clang-toolchain
+################################################################
+FROM alpine:${ALPINE_VERSION} AS build-musl
+
+ARG LLVM_VERSION
+ARG MUSL_VERSION
+ARG INSTALL_PREFIX
+ARG LLVM_INSTALL_PATH
+ARG MUSL_INSTALL_PATH
+ARG DEST_INSTALL_PREFIX
+
+COPY --from=build-llvm ${INSTALL_PREFIX} ${INSTALL_PREFIX}
+
+RUN mkdir -p ${DEST_INSTALL_PREFIX}/lib ${DEST_INSTALL_PREFIX}/bin ${DEST_INSTALL_PREFIX}/include \
+    && ln -s ${LLVM_INSTALL_PATH}/bin/*       ${DEST_INSTALL_PREFIX}/bin/ \
+    && ln -s ${LLVM_INSTALL_PATH}/lib/*       ${DEST_INSTALL_PREFIX}/lib/ \
+    && ln -s ${LLVM_INSTALL_PATH}/include/c++ ${DEST_INSTALL_PREFIX}/include/ \
+
+ARG CC=clang
+ARG CXX=clang++
+ARG CFLAGS=""
+ARG CXXFLAGS="-stdlib=libc++"
+ARG LDFLAGS="-rtlib=compiler-rt -unwindlib=libunwind -stdlib=libc++ -lc++ -lc++abi"
+
+# other build prerequiste
+RUN apk add --no-cache binutils curl linux-headers make patch
+
+# build musl
+ARG MUSL_SRC_DIR=/musl_src
+ARG MUSL_DOWNLOAD_URL=https://musl.libc.org/releases/musl-${MUSL_VERSION}.tar.gz
+RUN mkdir -p ${MUSL_SRC_DIR} \
+    && curl -L ${MUSL_DOWNLOAD_URL} | tar xz --strip-components 1 -C ${MUSL_SRC_DIR} 
+
+# apply patch
+RUN curl -L http://junsun.net/misc/patch/musl/01-remove-inline-assembly-float-optimization.patch | patch -ruN --strip=1 -d ${MUSL_SRC_DIR} 
+
+RUN cd ${MUSL_SRC_DIR} \
+    && CC=clang ./configure --prefix=${MUSL_INSTALL_PATH} \
+    && make -j`nproc` \
+    && make install
+
+################################################################
+FROM alpine:${ALPINE_VERSION} AS build-busybox
 
 ARG INSTALL_PREFIX
 ARG LLVM_INSTALL_PATH
 ARG MUSL_INSTALL_PATH
-
-ARG DEST_INSTALL_PREFIX=/usr
+ARG BUSYBOX_INSTALL_PATH
+ARG BUSYBOX_VERSION
+ARG DEST_INSTALL_PREFIX
 
 # assemble final image
-COPY --from=builder ${INSTALL_PREFIX} ${INSTALL_PREFIX}
+COPY --from=build-musl ${INSTALL_PREFIX} ${INSTALL_PREFIX}
 RUN mkdir -p ${DEST_INSTALL_PREFIX}/lib ${DEST_INSTALL_PREFIX}/bin ${DEST_INSTALL_PREFIX}/include \
     && ln -s ${LLVM_INSTALL_PATH}/bin/*       ${DEST_INSTALL_PREFIX}/bin/ \
     && ln -s ${LLVM_INSTALL_PATH}/lib/*       ${DEST_INSTALL_PREFIX}/lib/ \
@@ -149,19 +189,29 @@ RUN mkdir -p ${DEST_INSTALL_PREFIX}/lib ${DEST_INSTALL_PREFIX}/bin ${DEST_INSTAL
     && ln -s ${MUSL_INSTALL_PATH}/bin/*       ${DEST_INSTALL_PREFIX}/bin/ \
     && ln -s ${MUSL_INSTALL_PATH}/lib/*       ${DEST_INSTALL_PREFIX}/lib/ \
     && ln -s ${MUSL_INSTALL_PATH}/include/*   ${DEST_INSTALL_PREFIX}/include/
-RUN apk add --no-cache binutils linux-headers zlib
+RUN apk add --no-cache binutils linux-headers zlib curl make
 
 # set llvm toolchain as default
 ENV CC=clang
 ENV CXX=clang++
 ENV CFLAGS=""
 ENV CXXFLAGS="-stdlib=libc++"
-ENV LDFLAGS="-rtlib=compiler-rt -unwindlib=libunwind -stdlib=libc++ -lc++ -lc++abi"
+#ENV LDFLAGS="-rtlib=compiler-rt -unwindlib=libunwind -stdlib=libc++ -lc++ -lc++abi"
+ENV LDFLAGS="--static -rtlib=compiler-rt -unwindlib=libunwind"
 
 RUN ln -sf ${DEST_INSTALL_PREFIX}/bin/clang ${DEST_INSTALL_PREFIX}/bin/cc \
+    && ln -sf ${DEST_INSTALL_PREFIX}/bin/clang ${DEST_INSTALL_PREFIX}/bin/gcc \
     && ln -sf ${DEST_INSTALL_PREFIX}/bin/clang++ ${DEST_INSTALL_PREFIX}/bin/c++ \
     && ln -sf ${DEST_INSTALL_PREFIX}/bin/lld ${DEST_INSTALL_PREFIX}/bin/ld
 
 # add user mount point
+ARG BUSYBOX_SRC_DIR=/busybox-src
+RUN mkdir -p ${BUSYBOX_SRC_DIR} \
+    && curl -L https://busybox.net/downloads/busybox-${BUSYBOX_VERSION}.tar.bz2 | tar xj --strip-components 1 -C ${BUSYBOX_SRC_DIR} 
+
+RUN cd ${BUSYBOX_SRC_DIR} \
+    && make defconfig \
+    && make CONFIG_PREFIX=/install/busybox install
+
 RUN mkdir -p /project
 WORKDIR /project
