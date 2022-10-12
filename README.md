@@ -11,8 +11,15 @@ In this project we leverage llvm "-mgeneral-regs-only" option to build a soft-fl
 * use stage1 clang/llvm to build musl C library with "soft-float" patch
 * install stage1 clang/llvm and patched musl C library to build busybox statically
 
+## Host setup - Ubuntu
+* Prepare an aarch64/Linux machine (e.g., Ubuntu on AWS arm64 instance)
+* install docker, `sudo apt update && sudo apt install -y docker.io`
+* add user to docker group in order to run docker, `sudo usermod -aG docker $USER && newgrp docker`
+* clone the source, `git clone https://github.com/monkey-jsun/aarch64-soft-float-busybox.git`
+
 ## Build
 ```bash
+cd aarch64-soft-float-busybox
 docker build --rm=true -t monkey-jsun/aarch64-soft-float-busybox:latest .
 ```
 
